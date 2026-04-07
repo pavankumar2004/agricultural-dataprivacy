@@ -1,23 +1,16 @@
 """
-dataset.py — Synthetic Agricultural Dataset Generator
-=====================================================
-Generates realistic farm-level data for demonstrating privacy-preserving techniques.
-
-Based on: "Agricultural data privacy: Emerging platforms & strategies" (Gavai et al., 2025)
+Dataset Generator
 """
 
 import numpy as np
 import pandas as pd
 
-# Reproducible results
 SEED = 42
 
-# Configuration
 NUM_FARMS = 500
 REGIONS = ["North", "South", "East", "West", "Central"]
 CROP_TYPES = ["Wheat", "Rice", "Corn", "Soybean"]
 
-# Per-crop base parameters: (base_yield_tons_per_ha, base_revenue_per_ton)
 CROP_PARAMS = {
     "Wheat":   (3.5, 250),
     "Rice":    (4.2, 300),
@@ -25,7 +18,6 @@ CROP_PARAMS = {
     "Soybean": (2.8, 350),
 }
 
-# Per-region climate modifiers: (avg_rainfall_mm, avg_temp_c, yield_multiplier)
 REGION_CLIMATE = {
     "North":   (600,  18, 0.95),
     "South":   (900,  28, 1.10),
@@ -36,14 +28,7 @@ REGION_CLIMATE = {
 
 
 def generate_dataset(num_farms: int = NUM_FARMS, seed: int = SEED) -> pd.DataFrame:
-    """
-    Generate a synthetic agricultural dataset.
-
-    Returns:
-        pd.DataFrame with columns:
-            farm_id, region, crop_type, area_hectares, yield_tons,
-            soil_moisture, rainfall_mm, temperature_c, fertilizer_kg, revenue_usd
-    """
+    """Generate dataset."""
     rng = np.random.default_rng(seed)
 
     records = []
@@ -54,20 +39,17 @@ def generate_dataset(num_farms: int = NUM_FARMS, seed: int = SEED) -> pd.DataFra
         base_yield, rev_per_ton = CROP_PARAMS[crop]
         avg_rain, avg_temp, yield_mult = REGION_CLIMATE[region]
 
-        # Farm characteristics
-        area = round(rng.uniform(5, 200), 1)                       # hectares
-        soil_moisture = round(rng.uniform(15, 45), 1)               # percent
-        rainfall = round(rng.normal(avg_rain, avg_rain * 0.15), 1)  # mm
-        temperature = round(rng.normal(avg_temp, 3), 1)             # °C
-        fertilizer = round(rng.uniform(50, 300), 1)                 # kg/ha
+        area = round(rng.uniform(5, 200), 1)                       
+        soil_moisture = round(rng.uniform(15, 45), 1)               
+        rainfall = round(rng.normal(avg_rain, avg_rain * 0.15), 1)  
+        temperature = round(rng.normal(avg_temp, 3), 1)             
+        fertilizer = round(rng.uniform(50, 300), 1)                 
 
-        # Yield depends on region, moisture, and some noise
         noise = rng.normal(1.0, 0.12)
-        moisture_factor = 0.8 + 0.4 * (soil_moisture - 15) / 30  # [0.8, 1.2]
+        moisture_factor = 0.8 + 0.4 * (soil_moisture - 15) / 30  
         yield_per_ha = base_yield * yield_mult * moisture_factor * noise
         total_yield = round(max(area * yield_per_ha, 0), 2)
 
-        # Revenue
         price_noise = rng.normal(1.0, 0.05)
         revenue = round(total_yield * rev_per_ton * price_noise, 2)
 
@@ -88,12 +70,11 @@ def generate_dataset(num_farms: int = NUM_FARMS, seed: int = SEED) -> pd.DataFra
 
 
 def get_region_data(df: pd.DataFrame) -> dict:
-    """Split dataset by region for federated learning simulation."""
+    """Split dataset by region."""
     return {region: group.reset_index(drop=True)
             for region, group in df.groupby("region")}
 
 
-# ── Quick preview ──────────────────────────────────────────────
 if __name__ == "__main__":
     df = generate_dataset()
     print(f"Generated {len(df)} farm records across {df['region'].nunique()} regions")
